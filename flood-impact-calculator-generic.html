@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flood Impact Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a1628; --navy-mid: #142240; --navy-light: #1c3058;
+  --slate: #8b9dc3; --ice: #e8edf5; --white: #fff;
+  --amber: #f59e0b; --amber-dim: #d97706; --red: #ef4444; --red-deep: #b91c1c;
+  --green: #10b981; --green-deep: #059669;
+  --cyan: #06b6d4; --cyan-deep: #0891b2; --blue: #3b82f6;
+  --purple: #8b5cf6; --radius: 12px; --radius-sm: 8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--ice);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.header{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:32px;right:32px;height:1px;background:linear-gradient(90deg,transparent,rgba(6,182,212,0.3),transparent)}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo-mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;box-shadow:0 2px 12px rgba(6,182,212,0.3)}
+.header-title{font-family:'Fraunces',serif;font-size:18px;font-weight:500;color:var(--white);letter-spacing:-0.3px}
+.header-sub{font-size:11px;color:var(--slate);margin-top:1px;letter-spacing:0.5px;text-transform:uppercase}
+.toggle-pill{display:flex;background:var(--navy-mid);border-radius:30px;padding:3px;border:1px solid rgba(255,255,255,0.08)}
+.toggle-pill button{padding:7px 16px;border:none;border-radius:28px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.3s;background:transparent;color:var(--slate)}
+.toggle-pill button.active{background:linear-gradient(135deg,var(--cyan-deep),var(--blue));color:white;box-shadow:0 2px 8px rgba(6,182,212,0.3)}
+.toggle-pill button:hover:not(.active){color:var(--ice)}
+
+/* MAIN */
+.main{display:grid;grid-template-columns:380px 1fr}
+.input-panel{padding:24px 24px;border-right:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.15)}
+.results-panel{padding:28px 36px}
+
+/* INPUT STYLES */
+.section-label{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(6,182,212,0.2)}
+.input-group{margin-bottom:20px}
+.input-group label{display:block;font-size:12px;font-weight:500;color:var(--ice);margin-bottom:6px}
+.input-group .hint{font-size:10px;color:var(--slate);margin-bottom:6px;line-height:1.45}
+.input-wrapper{position:relative}
+.input-wrapper .prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:600;color:var(--slate);pointer-events:none}
+input[type="text"],input[type="number"]{width:100%;padding:10px 12px 10px 26px;background:var(--navy-mid);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,0.15)}
+select{width:100%;padding:10px 12px;background:var(--navy-mid);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238b9dc3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:border-color 0.2s}
+select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,0.15)}
+select option{background:var(--navy-mid);color:var(--white)}
+
+.sector-guidance{margin-top:8px;padding:10px 12px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--slate);line-height:1.5;display:none}
+.sector-guidance strong{color:var(--purple)}
+.sector-guidance .ss{color:var(--ice);font-weight:600}
+.sector-apply-btn{margin-top:6px;padding:5px 12px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);border-radius:6px;color:var(--purple);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.sector-apply-btn:hover{background:rgba(139,92,246,0.25);color:white}
+
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--navy-light);outline:none}
+.slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 2px 6px rgba(6,182,212,0.4)}
+.slider-value{min-width:40px;text-align:right;font-size:14px;font-weight:600;color:var(--cyan)}
+
+.duration-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.duration-btn{padding:8px 4px;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);background:var(--navy-mid);color:var(--slate);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;text-align:center}
+.duration-btn:hover{border-color:var(--cyan);color:var(--ice)}
+.duration-btn.active{background:rgba(6,182,212,0.15);border-color:var(--cyan);color:var(--cyan);font-weight:600}
+
+.risk-cards{display:flex;flex-direction:column;gap:6px}
+.risk-card{padding:10px 12px;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);background:var(--navy-mid);cursor:pointer;transition:all 0.25s;display:flex;align-items:flex-start;gap:10px}
+.risk-card:hover{border-color:rgba(255,255,255,0.18)}
+.risk-card.active.low{border-color:var(--green);background:rgba(16,185,129,0.08)}
+.risk-card.active.medium{border-color:var(--amber);background:rgba(245,158,11,0.08)}
+.risk-card.active.high{border-color:var(--red);background:rgba(239,68,68,0.08)}
+.risk-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.risk-dot.low{background:var(--green)}.risk-dot.medium{background:var(--amber)}.risk-dot.high{background:var(--red)}
+.risk-card-text h4{font-size:12px;font-weight:600;color:var(--white);margin-bottom:2px}
+.risk-card-text p{font-size:10px;color:var(--slate);line-height:1.4}
+
+.prob-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.prob-card{padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);background:var(--navy-mid);cursor:pointer;transition:all 0.25s;text-align:center}
+.prob-card:hover{border-color:rgba(255,255,255,0.18)}
+.prob-card.active{border-color:var(--cyan);background:rgba(6,182,212,0.1)}
+.prob-card .prob-label{font-size:12px;font-weight:600;color:var(--white)}
+.prob-card .prob-detail{font-size:10px;color:var(--slate);margin-top:2px}
+
+.sep{height:1px;background:rgba(255,255,255,0.06);margin:22px 0}
+
+/* HERO: Uninsured exposure */
+.hero-uninsured{text-align:center;padding:32px 20px 24px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);border-radius:var(--radius);margin-bottom:20px;position:relative;overflow:hidden}
+.hero-uninsured::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.06) 0%,transparent 70%);pointer-events:none}
+.hero-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--red);background:rgba(239,68,68,0.1);padding:4px 12px;border-radius:20px;margin-bottom:12px}
+.hero-amount{font-family:'Fraunces',serif;font-size:48px;font-weight:700;color:var(--white);letter-spacing:-2px;line-height:1;margin-bottom:6px;transition:all 0.4s}
+.hero-amount.mitigated{color:var(--green)}
+.hero-sub{font-size:13px;color:var(--slate)}
+.hero-sub strong{color:var(--ice);font-weight:600}
+.hero-context{font-size:11px;color:rgba(239,68,68,0.8);margin-top:8px;font-weight:500}
+.hero-context.green{color:rgba(16,185,129,0.8)}
+
+/* Savings strip */
+.savings-strip{display:none;text-align:center;padding:14px 20px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius);margin-bottom:20px}
+.savings-strip.visible{display:block}
+.savings-strip .saved{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--green);letter-spacing:-1px}
+.savings-strip .saved-label{font-size:12px;color:var(--green);margin-top:2px;opacity:0.85}
+
+/* ROI strip */
+.roi-strip{display:none;padding:16px 20px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.15);border-radius:var(--radius);margin-bottom:20px}
+.roi-strip.visible{display:block}
+.roi-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.roi-row:last-child{margin-bottom:0}
+.roi-label{font-size:12px;color:var(--slate)}
+.roi-value{font-size:13px;font-weight:600;color:var(--ice)}
+.roi-value.highlight{color:var(--cyan);font-size:15px}
+.roi-title{font-size:11px;font-weight:600;color:var(--cyan);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px}
+
+/* Breakdown cards */
+.breakdown-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.breakdown-card{padding:20px;background:var(--navy-mid);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden}
+.breakdown-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.breakdown-card.bi::before{background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.breakdown-card.pd::before{background:linear-gradient(90deg,var(--amber),var(--red))}
+.breakdown-card .card-label{font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--slate);margin-bottom:10px}
+.breakdown-card .card-amount{font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:var(--white);letter-spacing:-1px;margin-bottom:3px}
+.breakdown-card .card-sub{font-size:12px;color:var(--slate)}
+
+/* Chart */
+.chart-section{margin-bottom:24px}
+.chart-title{font-size:12px;font-weight:600;color:var(--ice);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.chart-bar-label{width:56px;font-size:11px;color:var(--slate);text-align:right;flex-shrink:0}
+.chart-bar-track{flex:1;height:24px;background:rgba(255,255,255,0.04);border-radius:5px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:5px;transition:width 0.6s cubic-bezier(0.22,1,0.36,1);background:linear-gradient(90deg,var(--cyan-deep),var(--blue))}
+.chart-bar-value-outside{font-size:11px;font-weight:600;color:var(--ice);min-width:95px;flex-shrink:0}
+.chart-bar-row.active .chart-bar-label{color:var(--cyan);font-weight:600}
+.chart-bar-row.active .chart-bar-fill{box-shadow:0 0 12px rgba(6,182,212,0.3)}
+.sector-marker{font-size:9px;font-weight:600;color:var(--purple);background:rgba(139,92,246,0.15);padding:2px 5px;border-radius:4px;margin-left:4px;white-space:nowrap}
+
+/* PD breakdown */
+.pd-breakdown{margin-top:6px}
+.pd-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.pd-row:last-child{border-bottom:none}
+.pd-row-label{display:flex;align-items:center;gap:8px}
+.pd-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.pd-icon.property{background:rgba(239,68,68,0.12)}
+.pd-icon.contents{background:rgba(245,158,11,0.12)}
+.pd-icon.fixed{background:rgba(139,92,246,0.12)}
+.pd-row-name{font-size:12px;color:var(--ice);font-weight:500}
+.pd-row-desc{font-size:10px;color:var(--slate)}
+.pd-row-value{font-size:14px;font-weight:600;color:var(--white)}
+.pd-row-mitigated{font-size:10px;color:var(--green);text-align:right}
+
+/* Multi-site */
+.multisite-section{margin-top:20px;padding:16px 20px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:var(--radius)}
+.multisite-title{font-size:11px;font-weight:600;color:var(--blue);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px}
+.multisite-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.multisite-label{font-size:12px;color:var(--slate)}
+.multisite-value{font-size:13px;font-weight:600;color:var(--ice)}
+.multisite-value.big{font-family:'Fraunces',serif;font-size:20px;color:var(--white);letter-spacing:-0.5px}
+
+/* Mitigation callout */
+.mitigation-callout{display:none;margin-top:20px;padding:18px 20px;background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.15);border-radius:var(--radius)}
+.mitigation-callout.visible{display:block}
+.mitigation-callout h4{font-size:13px;font-weight:600;color:var(--cyan);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.mitigation-callout p{font-size:12px;color:var(--slate);line-height:1.55;margin-bottom:6px}
+.mitigation-callout p:last-child{margin-bottom:0}
+.mitigation-callout strong{color:var(--ice)}
+
+/* Evidence */
+.evidence-callout{margin-top:20px;padding:14px 18px;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.12);border-radius:var(--radius-sm)}
+.evidence-callout h4{font-size:11px;font-weight:600;color:var(--purple);margin-bottom:6px;letter-spacing:0.5px}
+.evidence-callout p{font-size:11px;color:var(--slate);line-height:1.5;margin-bottom:4px}
+.evidence-callout p:last-child{margin-bottom:0}
+.evidence-callout strong{color:var(--ice)}
+
+.insurance-note{margin-top:16px;padding:12px 16px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.12);border-radius:var(--radius-sm)}
+.insurance-note p{font-size:11px;color:var(--slate);line-height:1.5}
+.insurance-note strong{color:var(--amber)}
+
+.limitations{margin-top:24px;padding:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius)}
+.limitations h4{font-size:12px;font-weight:700;color:var(--ice);letter-spacing:0.5px;margin-bottom:10px;text-transform:uppercase}
+.limitations p{font-size:11px;color:var(--slate);line-height:1.6;margin-bottom:8px}
+.limitations p:last-child{margin-bottom:0}
+.cta-box{margin-top:20px;padding:22px 24px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius);text-align:center}
+.cta-box p{font-size:13px;color:var(--white);line-height:1.6;margin-bottom:0}
+.cta-box strong{color:var(--cyan)}
+.footer{padding:16px 36px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(139,157,195,0.4);text-align:center;line-height:1.5}
+
+@media(max-width:900px){.main{grid-template-columns:1fr}.input-panel{border-right:none;border-bottom:1px solid rgba(255,255,255,0.06)}.breakdown-row{grid-template-columns:1fr}.hero-amount{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">FI</div>
+    <div><div class="header-title">Flood Impact Calculator</div><div class="header-sub">Site-Level Exposure Analysis</div></div>
+  </div>
+  <div class="header-right">
+    <div class="toggle-pill">
+      <button id="btn-unmit" class="active" onclick="setView('unmit')">Unmitigated</button>
+      <button id="btn-mit" onclick="setView('mit')">With Early Warning</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+<div class="input-panel">
+  <div class="section-label">Site Profile</div>
+  <div class="input-group">
+    <label>Site Type / Sector</label>
+    <select id="sector" onchange="onSectorChange()">
+      <option value="custom">Custom / Not listed</option>
+      <option value="manufacturing" selected>Manufacturing / Production</option>
+      <option value="warehouse">Warehousing / Distribution</option>
+      <option value="retail">Retail</option>
+      <option value="hospitality">Hospitality / Food Service</option>
+      <option value="office">Office / Professional Services</option>
+      <option value="healthcare">Healthcare / Medical</option>
+      <option value="utilities">Utilities / Infrastructure</option>
+      <option value="datacentre">Data Centre / Technology</option>
+      <option value="education">Education</option>
+    </select>
+    <div class="sector-guidance" id="sector-guidance"></div>
+  </div>
+  <div class="input-group">
+    <label>Flood Probability Band</label>
+    <div class="hint">How likely is this site to flood? Used to annualise the expected loss.</div>
+    <div class="prob-cards" id="prob-cards">
+      <div class="prob-card" data-prob="low" onclick="selectProb('low')"><div class="prob-label">Low</div><div class="prob-detail">1-in-200 yr</div></div>
+      <div class="prob-card active" data-prob="moderate" onclick="selectProb('moderate')"><div class="prob-label">Moderate</div><div class="prob-detail">1-in-75 yr</div></div>
+      <div class="prob-card" data-prob="significant" onclick="selectProb('significant')"><div class="prob-label">Significant</div><div class="prob-detail">1-in-30 yr</div></div>
+      <div class="prob-card" data-prob="high" onclick="selectProb('high')"><div class="prob-label">High</div><div class="prob-detail">1-in-10 yr</div></div>
+    </div>
+  </div>
+  <div class="input-group">
+    <label>Annual Site Revenue</label>
+    <div class="input-wrapper"><span class="prefix">£</span><input type="text" id="revenue" value="5,000,000" oninput="fmtInput(this);recalc()"></div>
+  </div>
+  <div class="input-group">
+    <label>Gross Profit Margin</label>
+    <div class="slider-row"><input type="range" id="margin" min="10" max="80" value="40" oninput="recalc();document.getElementById('mval').textContent=this.value+'%'"><span class="slider-value" id="mval">40%</span></div>
+  </div>
+  <div class="sep"></div>
+  <div class="section-label">Closure Duration</div>
+  <div class="input-group">
+    <div class="duration-grid">
+      <button class="duration-btn" data-days="1" onclick="selDur(1)">1 day</button>
+      <button class="duration-btn" data-days="2" onclick="selDur(2)">2 days</button>
+      <button class="duration-btn" data-days="5" onclick="selDur(5)">5 days</button>
+      <button class="duration-btn" data-days="10" onclick="selDur(10)">2 weeks</button>
+      <button class="duration-btn active" data-days="20" onclick="selDur(20)">4 weeks</button>
+      <button class="duration-btn" data-days="40" onclick="selDur(40)">8 weeks</button>
+    </div>
+  </div>
+  <div class="sep"></div>
+  <div class="section-label">Physical Asset Exposure</div>
+  <div class="input-group">
+    <label>Ground Floor Asset Profile</label>
+    <div class="risk-cards">
+      <div class="risk-card low" data-risk="low" onclick="selRisk('low')"><div class="risk-dot low"></div><div class="risk-card-text"><h4>Low</h4><p>Minimal ground-floor assets. No critical equipment.</p></div></div>
+      <div class="risk-card medium active medium" data-risk="medium" onclick="selRisk('medium')"><div class="risk-dot medium"></div><div class="risk-card-text"><h4>Medium</h4><p>Valuable moveable assets — stock, equipment. Could be relocated with warning.</p></div></div>
+      <div class="risk-card high" data-risk="high" onclick="selRisk('high')"><div class="risk-dot high"></div><div class="risk-card-text"><h4>High</h4><p>Expensive fixed assets — machinery, servers, plant. Require physical defences.</p></div></div>
+    </div>
+  </div>
+  <div class="input-group" style="margin-top:12px">
+    <label>Ground Floor Asset Value</label>
+    <div class="input-wrapper"><span class="prefix">£</span><input type="text" id="asset-value" value="500,000" oninput="fmtInput(this);recalc()"></div>
+  </div>
+  <div class="sep"></div>
+  <div class="section-label">Insurance Context</div>
+  <div class="input-group">
+    <label>Flood Excess / Deductible</label>
+    <div class="input-wrapper"><span class="prefix">£</span><input type="text" id="excess" value="100,000" oninput="fmtInput(this);recalc()"></div>
+  </div>
+  <div class="input-group">
+    <label>BI Waiting Period (days)</label>
+    <div class="input-wrapper"><span class="prefix" style="opacity:0">£</span><input type="text" id="wait" value="3" style="padding-left:12px" oninput="recalc()"></div>
+  </div>
+  <div class="sep"></div>
+  <div class="section-label">Multi-Site (optional)</div>
+  <div class="input-group">
+    <label>Number of Similar Sites</label>
+    <div class="hint">If you operate multiple comparable sites, enter the count to see aggregate exposure</div>
+    <div class="input-wrapper"><span class="prefix" style="opacity:0">£</span><input type="text" id="num-sites" value="1" style="padding-left:12px" oninput="recalc()"></div>
+  </div>
+  <div class="input-group">
+    <label>Indicative Annual Cost of Flood Intelligence</label>
+    <div class="hint">Approximate flood intelligence subscription cost per site per year</div>
+    <div class="input-wrapper"><span class="prefix">£</span><input type="text" id="protection-cost" value="8,000" oninput="fmtInput(this);recalc()"></div>
+  </div>
+</div>
+
+<div class="results-panel">
+  <!-- HERO: Uninsured exposure -->
+  <div class="hero-uninsured" id="hero-box">
+    <div class="hero-tag" id="hero-tag">Lands on your balance sheet</div>
+    <div class="hero-amount" id="hero-amount">£0</div>
+    <div class="hero-sub" id="hero-sub"></div>
+    <div class="hero-context" id="hero-context"></div>
+  </div>
+
+  <div class="savings-strip" id="savings-strip">
+    <div class="saved" id="saved-amount">£0</div>
+    <div class="saved-label">Reduction in total exposure with early-warning intelligence</div>
+  </div>
+
+  <!-- ROI -->
+  <div class="roi-strip" id="roi-strip">
+    <div class="roi-title">Return on Flood Intelligence Investment</div>
+    <div class="roi-row"><span class="roi-label">Annual cost of protection (per site)</span><span class="roi-value" id="roi-cost">£0</span></div>
+    <div class="roi-row"><span class="roi-label">Annualised exposure reduction</span><span class="roi-value" id="roi-saving">£0</span></div>
+    <div class="roi-row"><span class="roi-label">Return on investment</span><span class="roi-value highlight" id="roi-ratio">0x</span></div>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="breakdown-row">
+    <div class="breakdown-card bi"><div class="card-label">Business Interruption</div><div class="card-amount" id="bi-amount">£0</div><div class="card-sub" id="bi-sub"></div></div>
+    <div class="breakdown-card pd"><div class="card-label">Physical Damage</div><div class="card-amount" id="pd-amount">£0</div><div class="card-sub" id="pd-sub"></div></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section">
+    <div class="chart-title">Impact by Closure Duration</div>
+    <div id="chart-bars"></div>
+  </div>
+
+  <!-- PD breakdown -->
+  <div class="chart-title" style="margin-top:24px">Physical Damage Breakdown</div>
+  <div class="pd-breakdown" id="pd-breakdown"></div>
+
+  <div class="insurance-note"><p id="ins-text"></p></div>
+
+  <!-- Multi-site -->
+  <div class="multisite-section" id="multisite-section" style="display:none">
+    <div class="multisite-title">Multi-Site Aggregate Exposure</div>
+    <div class="multisite-row"><span class="multisite-label">Number of sites</span><span class="multisite-value" id="ms-count">1</span></div>
+    <div class="multisite-row"><span class="multisite-label">Per-site exposure</span><span class="multisite-value" id="ms-per">£0</span></div>
+    <div class="multisite-row"><span class="multisite-label">Aggregate exposure</span><span class="multisite-value big" id="ms-total">£0</span></div>
+    <div class="multisite-row" id="ms-mit-row" style="display:none"><span class="multisite-label">Aggregate mitigated</span><span class="multisite-value big" id="ms-mit" style="color:var(--green)">£0</span></div>
+    <div class="multisite-row" id="ms-cost-row" style="display:none"><span class="multisite-label">Total annual protection cost</span><span class="multisite-value" id="ms-prot-cost">£0</span></div>
+  </div>
+
+  <!-- Mitigation -->
+  <div class="mitigation-callout" id="mit-callout">
+    <h4>How Early Warning Changes the Equation</h4>
+    <p>With <strong>real-time flood intelligence delivering up to 48 hours of advance warning</strong>, organisations can take pre-emptive action:</p>
+    <p id="mit-detail"></p>
+  </div>
+
+  <!-- Evidence -->
+  <div class="evidence-callout"><h4>What the Research Says</h4><p id="ev-text"></p></div>
+
+  <div class="limitations">
+    <h4>Important Limitations</h4>
+    <p>This tool provides illustrative estimates to frame the potential scale of flood exposure at a site level. It is not a formal business interruption review, flood risk assessment, or insurance valuation. Users should be aware of the following simplifications:</p>
+    <p>Business interruption is modelled on a flat daily gross profit basis. It does not account for seasonality, peak trading periods, increased cost of working, salvage, supply chain disruption, or contractual penalties — all of which may materially affect actual BI exposure.</p>
+    <p>Physical damage allocation across property fabric, moveable contents, and fixed assets is based on illustrative profiles (Low / Medium / High) rather than site-specific asset surveys. Actual exposure will depend on flood depth, duration, contamination, and the specific assets present.</p>
+    <p>Mitigation assumptions (BI duration reduction, contents salvage rates, property and fixed asset protection) are indicative estimates based on the principle that advance warning enables pre-emptive action. They are not derived from a specific claims dataset and should be validated against real deployment outcomes.</p>
+    <p>Flood probability bands are broad approximations used to annualise expected loss. They do not replace a site-specific flood risk assessment informed by hydraulic modelling and local flood history.</p>
+    <p>Sector closure benchmarks are informed by published academic research and UK industry surveys but represent cross-sector averages with wide variance. Individual site outcomes depend on factors including flood severity, asset complexity, supply chain dependencies, and business continuity preparedness.</p>
+  </div>
+
+  <div class="cta-box">
+    <p>For a <strong>full business interruption review</strong>, a <strong>site-specific flood risk assessment</strong>, or <strong>modelled expected annual loss values</strong>, please contact your insurance broker or risk advisor.</p>
+  </div>
+
+  <div class="footer">
+    Sources: Thieken et al. (2018); FloodFlash UK Commercial Risk Report 2022; ScienceDirect Netherlands 2021; MDPI Global BI Assessment 2022.
+  </div>
+</div>
+</div>
+
+<script>
+let view='unmit',selDays=20,selRiskVal='medium',selSector='manufacturing',selProbVal='moderate';
+
+const S={
+  custom:{name:'Custom',td:null,dm:40,dr:'medium',g:null,ev:null},
+  manufacturing:{name:'Manufacturing / Production',td:20,rl:10,rh:40,dm:35,dr:'high',
+    g:'Manufacturing: <strong>highest absolute losses</strong> due to heavy fixed assets. Research shows median closures of <span class="ss">15–30 days</span>, long tail to 100+ days.',
+    ev:'German study of 557 firms: manufacturing had highest total direct damage. Median BI 15 days, mean 54 days. Durations ranged from single digits to 400+ days at equivalent flood depths.'},
+  warehouse:{name:'Warehousing / Distribution',td:15,rl:7,rh:30,dm:25,dr:'medium',
+    g:'Major <strong>stock/inventory loss</strong> but faster structural recovery. Typical: <span class="ss">10–20 days</span>.',
+    ev:'UK: wholesaling/logistics make up 20%+ of at-risk commercial properties. 76% have insurance. Simpler reinstatement = below-average closure times.'},
+  retail:{name:'Retail',td:20,rl:10,rh:50,dm:45,dr:'medium',
+    g:'<strong>Most at-risk sector</strong> — ~32% of UK flood-zone properties. Typical: <span class="ss">15–30 days</span>. 58% lack flood insurance.',
+    ev:'Retail is the most exposed sector by property count. High stock values, complex fit-outs, and only 42% insurance penetration. 40% of small businesses never reopen after a flood.'},
+  hospitality:{name:'Hospitality / Food Service',td:25,rl:14,rh:50,dm:55,dr:'medium',
+    g:'<strong>Extended closures</strong> from health & safety decontamination. Typical: <span class="ss">20–35 days</span>.',
+    ev:'Among the most vulnerable sectors. US case: 84 days closure from inundation, 211 days to full recovery (2.5× inundation period).'},
+  office:{name:'Office / Professional Services',td:10,rl:5,rh:20,dm:55,dr:'low',
+    g:'<strong>Fastest recovery</strong> with remote working. Physical closure: <span class="ss">5–15 days</span>.',
+    ev:'~10% of at-risk properties. ~50% insured. Remote working reduces effective BI but physical reinstatement still requires rewiring, drying, refit.'},
+  healthcare:{name:'Healthcare / Medical',td:30,rl:14,rh:60,dm:40,dr:'high',
+    g:'<strong>Stringent decontamination and regulatory sign-off</strong>. Typical: <span class="ss">20–40+ days</span>.',
+    ev:'Tadcaster GP surgery: nearly 1 year to full reinstatement after 2015 flooding. Infection control and regulatory requirements compound timelines.'},
+  utilities:{name:'Utilities / Infrastructure',td:20,rl:10,rh:40,dm:35,dr:'high',
+    g:'<strong>Critical fixed infrastructure</strong>. Typical: <span class="ss">15–30 days</span>. Knock-on customer impact often exceeds direct loss.',
+    ev:'83% insurance penetration (highest). Fixed, high-value assets make early warning and physical defences the primary mitigation strategies.'},
+  datacentre:{name:'Data Centre / Technology',td:15,rl:5,rh:40,dm:50,dr:'high',
+    g:'<strong>Extremely high asset value per m²</strong>. Minor: <span class="ss">5–15 days</span>. Major: 6+ months.',
+    ev:'BI period typically 2–2.5× inundation for tech facilities. High asset concentration = disproportionate loss from even shallow flooding.'},
+  education:{name:'Education',td:25,rl:14,rh:50,dm:30,dr:'medium',
+    g:'<strong>Extended closures</strong> from safeguarding, large ground-floor footprint. Typical: <span class="ss">15–35 days</span>.',
+    ev:'Large footprints, complex reinstatement. 83% insurance penetration. Social impact extends beyond financial metrics.'},
+};
+
+const probData={low:{label:'Low (1-in-200yr)',annual:1/200},moderate:{label:'Moderate (1-in-75yr)',annual:1/75},significant:{label:'Significant (1-in-30yr)',annual:1/30},high:{label:'High (1-in-10yr)',annual:1/10}};
+const durs=[{d:1,l:'1 day'},{d:2,l:'2 days'},{d:5,l:'5 days'},{d:10,l:'2 weeks'},{d:20,l:'4 weeks'},{d:40,l:'8 weeks'}];
+const riskP={low:{pr:0.6,co:0.3,fx:0.1},medium:{pr:0.3,co:0.5,fx:0.2},high:{pr:0.15,co:0.25,fx:0.6}};
+const mit={bi:0.30,pr:0.15,co:0.70,fx:0.10};
+
+function pn(id){return parseFloat(document.getElementById(id).value.replace(/[^0-9.]/g,''))||0}
+function fm(n){if(n>=1e6)return'£'+(n/1e6).toFixed(2)+'m';if(n>=1e3)return'£'+Math.round(n).toLocaleString('en-GB');return'£'+Math.round(n)}
+function ff(n){return'£'+Math.round(n).toLocaleString('en-GB')}
+function fmtInput(el){const r=el.value.replace(/[^0-9]/g,'');if(r){const n=parseInt(r),p=el.selectionStart,ol=el.value.length;el.value=n.toLocaleString('en-GB');el.setSelectionRange(p+(el.value.length-ol),p+(el.value.length-ol))}}
+
+function onSectorChange(){
+  selSector=document.getElementById('sector').value;const s=S[selSector],g=document.getElementById('sector-guidance');
+  if(s.g){g.innerHTML=s.g+`<br><button class="sector-apply-btn" onclick="applySD()">Apply typical settings</button>`;g.style.display='block'}else{g.style.display='none'}
+  recalc();
+}
+function applySD(){
+  const s=S[selSector];if(!s)return;
+  document.getElementById('margin').value=s.dm;document.getElementById('mval').textContent=s.dm+'%';
+  const cl=durs.reduce((p,c)=>Math.abs(c.d-s.td)<Math.abs(p.d-s.td)?c:p);selDur(cl.d);selRisk(s.dr);recalc();
+}
+function selDur(d){selDays=d;document.querySelectorAll('.duration-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.days)===d));recalc()}
+function selRisk(r){selRiskVal=r;document.querySelectorAll('.risk-card').forEach(c=>{c.classList.remove('active','low','medium','high');if(c.dataset.risk===r)c.classList.add('active',r)});recalc()}
+function selectProb(p){selProbVal=p;document.querySelectorAll('.prob-card').forEach(c=>c.classList.toggle('active',c.dataset.prob===p));recalc()}
+function setView(v){view=v;document.getElementById('btn-unmit').classList.toggle('active',v==='unmit');document.getElementById('btn-mit').classList.toggle('active',v==='mit');recalc()}
+
+function recalc(){
+  const rev=pn('revenue'),mrg=parseInt(document.getElementById('margin').value)/100,av=pn('asset-value'),exc=pn('excess'),wd=parseInt(document.getElementById('wait').value)||0,isMit=view==='mit',s=S[selSector],numSites=Math.max(1,parseInt(document.getElementById('num-sites').value)||1),protCost=pn('protection-cost');
+  const prob=probData[selProbVal];
+  const dgp=rev*mrg/365;
+  const effDays=isMit?Math.max(1,Math.round(selDays*(1-mit.bi))):selDays;
+  const biLoss=dgp*effDays;
+  const uBIDays=Math.min(wd,effDays),uBI=dgp*uBIDays;
+
+  const p=riskP[selRiskVal];
+  const prD=av*p.pr,coD=av*p.co,fxD=av*p.fx;
+  let aPr=prD,aCo=coD,aFx=fxD;
+  if(isMit){aPr=prD*(1-mit.pr);aCo=coD*(1-mit.co);aFx=fxD*(1-mit.fx)}
+  const pdT=aPr+aCo+aFx,pdTU=prD+coD+fxD;
+  const totalLoss=biLoss+pdT;
+  const totalUnmit=(dgp*selDays)+pdTU;
+  const savings=totalUnmit-totalLoss;
+
+  // Uninsured = BI in waiting period + PD within excess
+  const uninsuredTotal=uBI+Math.min(exc,pdT);
+  // Annualised
+  const annualProb=prob.annual;
+  const annualisedExposure=totalLoss*annualProb;
+  const annualisedSavings=savings*annualProb;
+
+  // HERO — now leads with uninsured exposure
+  const heroEl=document.getElementById('hero-amount');
+  if(!isMit){
+    document.getElementById('hero-tag').textContent='Lands on your balance sheet — before insurers pay';
+    document.getElementById('hero-tag').style.color='var(--red)';
+    document.getElementById('hero-tag').style.background='rgba(239,68,68,0.1)';
+    heroEl.textContent=fm(uninsuredTotal);
+    heroEl.classList.remove('mitigated');
+    document.getElementById('hero-box').style.borderColor='rgba(239,68,68,0.12)';
+    document.getElementById('hero-box').style.background='rgba(239,68,68,0.04)';
+    const durLabel=durs.find(d=>d.d===selDays)?.l||selDays+' days';
+    document.getElementById('hero-sub').innerHTML=`From a total exposure of <strong>${fm(totalLoss)}</strong> over a <strong>${durLabel}</strong> closure`;
+    document.getElementById('hero-context').textContent=`${wd}-day BI waiting period + ${ff(exc)} flood excess = ${ff(Math.round(uninsuredTotal))} uninsured`;
+    document.getElementById('hero-context').className='hero-context';
+  } else {
+    document.getElementById('hero-tag').textContent='Mitigated total exposure — with early warning';
+    document.getElementById('hero-tag').style.color='var(--green)';
+    document.getElementById('hero-tag').style.background='rgba(16,185,129,0.1)';
+    heroEl.textContent=fm(totalLoss);
+    heroEl.classList.add('mitigated');
+    document.getElementById('hero-box').style.borderColor='rgba(16,185,129,0.15)';
+    document.getElementById('hero-box').style.background='rgba(16,185,129,0.04)';
+    document.getElementById('hero-sub').innerHTML=`Reduced from <strong>${fm(totalUnmit)}</strong> unmitigated`;
+    document.getElementById('hero-context').textContent=`Closure reduced from ${selDays} to ${effDays} days. Contents salvage rate: ${Math.round(mit.co*100)}%.`;
+    document.getElementById('hero-context').className='hero-context green';
+  }
+
+  // Savings
+  const ss=document.getElementById('savings-strip');
+  ss.classList.toggle('visible',isMit);
+  document.getElementById('saved-amount').textContent=fm(savings);
+
+  // ROI
+  const roiStrip=document.getElementById('roi-strip');
+  if(isMit && protCost>0){
+    roiStrip.classList.add('visible');
+    document.getElementById('roi-cost').textContent=ff(protCost)+'/yr';
+    document.getElementById('roi-saving').textContent=fm(annualisedSavings)+'/yr';
+    const roiX=annualisedSavings/protCost;
+    document.getElementById('roi-ratio').textContent=roiX>=1?roiX.toFixed(1)+'×':'£'+Math.round(annualisedSavings)+' vs £'+protCost;
+  } else {
+    roiStrip.classList.remove('visible');
+  }
+
+  // Breakdown
+  document.getElementById('bi-amount').textContent=fm(biLoss);
+  document.getElementById('bi-sub').textContent=isMit?`${effDays} days @ ${ff(Math.round(dgp))}/day (from ${selDays})`:`${effDays} days @ ${ff(Math.round(dgp))}/day GP`;
+  document.getElementById('pd-amount').textContent=fm(pdT);
+  document.getElementById('pd-sub').textContent=`${selRiskVal[0].toUpperCase()+selRiskVal.slice(1)} risk profile`;
+
+  // Chart
+  const maxL=(dgp*40)+pdTU;
+  const clT=s.td?durs.reduce((p,c)=>Math.abs(c.d-s.td)<Math.abs(p.d-s.td)?c:p):null;
+  document.getElementById('chart-bars').innerHTML=durs.map(d=>{
+    const dBI=dgp*(isMit?Math.max(1,Math.round(d.d*(1-mit.bi))):d.d);
+    const dT=dBI+pdT;const pct=Math.max(2,(dT/maxL)*100);
+    const isA=d.d===selDays;const isST=clT&&d.d===clT.d&&!isA;
+    return`<div class="chart-bar-row ${isA?'active':''} ${isST?'sector-typical':''}"><div class="chart-bar-label">${d.l}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%"></div></div><div class="chart-bar-value-outside">${fm(dT)}${isST?'<span class="sector-marker">Typical</span>':''}</div></div>`;
+  }).join('');
+
+  // PD
+  const pdItems=[
+    {i:'🏢',c:'property',n:'Property / Building Fabric',d:'Walls, floors, electrical',u:prD,m:aPr,mp:Math.round(mit.pr*100)},
+    {i:'📦',c:'contents',n:'Moveable Contents',d:'Stock, equipment, furniture',u:coD,m:aCo,mp:Math.round(mit.co*100)},
+    {i:'⚙️',c:'fixed',n:'Fixed Assets',d:'Machinery, plant, servers',u:fxD,m:aFx,mp:Math.round(mit.fx*100)},
+  ];
+  document.getElementById('pd-breakdown').innerHTML=pdItems.map(it=>{
+    const v=isMit?it.m:it.u;const mn=isMit?`<div class="pd-row-mitigated">${it.mp}% mitigable</div>`:'';
+    return`<div class="pd-row"><div class="pd-row-label"><div class="pd-icon ${it.c}">${it.i}</div><div><div class="pd-row-name">${it.n}</div><div class="pd-row-desc">${it.d}</div></div></div><div style="text-align:right"><div class="pd-row-value">${fm(v)}</div>${mn}</div></div>`;
+  }).join('');
+
+  // Insurance
+  document.getElementById('ins-text').innerHTML=`<strong>Total exposure: ${fm(totalLoss)}</strong>. Of this, <strong>${fm(Math.round(uninsuredTotal))}</strong> falls below your excess and BI waiting period — it's your cost, not your insurer's. Annualised at ${prob.label}: <strong>${fm(Math.round(annualisedExposure))}/year</strong> expected loss.`;
+
+  // Multi-site
+  const msSection=document.getElementById('multisite-section');
+  if(numSites>1){
+    msSection.style.display='block';
+    document.getElementById('ms-count').textContent=numSites;
+    document.getElementById('ms-per').textContent=fm(totalLoss);
+    document.getElementById('ms-total').textContent=fm(totalLoss*numSites);
+    if(isMit){
+      document.getElementById('ms-mit-row').style.display='flex';
+      document.getElementById('ms-mit').textContent=fm(totalLoss*numSites);
+      document.getElementById('ms-cost-row').style.display='flex';
+      document.getElementById('ms-prot-cost').textContent=ff(protCost*numSites)+'/yr';
+    } else {
+      document.getElementById('ms-mit-row').style.display='none';
+      document.getElementById('ms-cost-row').style.display='none';
+    }
+  } else {
+    msSection.style.display='none';
+  }
+
+  // Mitigation callout
+  const mc=document.getElementById('mit-callout');mc.classList.toggle('visible',isMit);
+  if(isMit){
+    const coSaved=coD-aCo;
+    document.getElementById('mit-detail').innerHTML=`<strong>Business continuity:</strong> Real-time flood intelligence can provide up to <strong>48 hours of advance warning</strong>, enabling pre-emptive site preparation, staged shutdowns, and faster recovery — reducing closure from <strong>${selDays} to ~${effDays} days</strong>.<br><br><strong>Contents protection:</strong> With hours of lead time, moveable assets (${ff(Math.round(coD))} at risk) can be elevated or relocated — saving an estimated <strong>${ff(Math.round(coSaved))}</strong>.<br><br><strong>Fixed asset defence:</strong> Advance warning enables deployment of temporary barriers, safe equipment power-down, and pre-cleared drainage. Even partial protection of fixed assets significantly reduces reinstatement cost and downtime.`;
+  }
+
+  // Evidence
+  const evEl=document.getElementById('ev-text');
+  const xSector=`<br><br><strong>Cross-sector:</strong> Each day of BI costs firms ~0.5% of annual revenue (Netherlands 2021). UK average SME flood closure: 50 working days. 40% of small businesses never reopen. BI period is typically 2–2.5× the actual inundation duration.`;
+  if(s.ev){evEl.innerHTML=s.ev+xSector}
+  else{evEl.innerHTML=`<strong>Cross-sector:</strong> German study of 557 firms: median BI = <strong>15 days</strong>, mean = <strong>54 days</strong>. Netherlands: ~0.5% of revenue per day. UK: average 50 working days lost, 40% never reopen.`}
+}
+
+onSectorChange();recalc();
+</script>
+</body>
+</html>
